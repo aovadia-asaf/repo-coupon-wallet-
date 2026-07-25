@@ -1,18 +1,9 @@
 import { Router } from "express";
 import { z } from "zod";
+import { CATEGORIES } from "../constants";
 import { prisma } from "../db/client";
 
 const router = Router();
-
-const CATEGORIES = [
-  "food",
-  "fashion",
-  "electronics",
-  "beauty",
-  "entertainment",
-  "travel",
-  "other",
-] as const;
 
 const couponInputSchema = z.object({
   title: z.string().min(1, "כותרת חובה"),

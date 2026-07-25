@@ -5,26 +5,28 @@ import { CropTool } from "./CropTool";
 
 interface Props {
   initial?: Coupon;
+  prefill?: Partial<CouponInput>;
   onSaved: () => void;
   onCancel: () => void;
 }
 
-function toDateInputValue(iso: string | null): string {
+function toDateInputValue(iso: string | null | undefined): string {
   if (!iso) return "";
   return iso.slice(0, 10);
 }
 
-export function CouponForm({ initial, onSaved, onCancel }: Props) {
-  const [title, setTitle] = useState(initial?.title ?? "");
-  const [store, setStore] = useState(initial?.store ?? "");
-  const [category, setCategory] = useState<Category>(initial?.category ?? "other");
-  const [value, setValue] = useState(initial?.value ?? "");
-  const [expiry, setExpiry] = useState(toDateInputValue(initial?.expiry ?? null));
-  const [code, setCode] = useState(initial?.code ?? "");
-  const [codeType, setCodeType] = useState<CodeType | "">(initial?.codeType ?? "");
-  const [notes, setNotes] = useState(initial?.notes ?? "");
-  const [imagePath, setImagePath] = useState(initial?.imagePath ?? "");
-  const [imageIsPdfSourced, setImageIsPdfSourced] = useState(initial?.imageIsPdfSourced ?? false);
+export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
+  const source = initial ?? prefill;
+  const [title, setTitle] = useState(source?.title ?? "");
+  const [store, setStore] = useState(source?.store ?? "");
+  const [category, setCategory] = useState<Category>(source?.category ?? "other");
+  const [value, setValue] = useState(source?.value ?? "");
+  const [expiry, setExpiry] = useState(toDateInputValue(source?.expiry ?? null));
+  const [code, setCode] = useState(source?.code ?? "");
+  const [codeType, setCodeType] = useState<CodeType | "">(source?.codeType ?? "");
+  const [notes, setNotes] = useState(source?.notes ?? "");
+  const [imagePath, setImagePath] = useState(source?.imagePath ?? "");
+  const [imageIsPdfSourced, setImageIsPdfSourced] = useState(source?.imageIsPdfSourced ?? false);
 
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);

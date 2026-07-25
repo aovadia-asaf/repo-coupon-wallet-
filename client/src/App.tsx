@@ -5,10 +5,11 @@ import { CouponCard } from "./components/CouponCard";
 import { CouponForm } from "./components/CouponForm";
 import { DuplicateBanner } from "./components/DuplicateBanner";
 import { FilterBar, type Filters } from "./components/FilterBar";
+import { ImportModal } from "./components/ImportModal";
 import { LoginScreen } from "./components/LoginScreen";
 import { PresentView } from "./components/PresentView";
 import { SummaryBanner } from "./components/SummaryBanner";
-import type { Coupon } from "./types";
+import type { Coupon, CouponInput } from "./types";
 import { ViewTabs, type View } from "./components/ViewTabs";
 
 const EMPTY_FILTERS: Filters = { q: "", store: "", category: "", status: "" };
@@ -25,6 +26,8 @@ export default function App() {
   const [editingCoupon, setEditingCoupon] = useState<Coupon | "new" | null>(null);
   const [deletingCoupon, setDeletingCoupon] = useState<Coupon | null>(null);
   const [presentingCoupon, setPresentingCoupon] = useState<Coupon | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [prefillData, setPrefillData] = useState<Partial<CouponInput> | null>(null);
 
   useEffect(() => {
     api
@@ -87,6 +90,9 @@ export default function App() {
           <a href="/api/coupons/export?format=json" className="btn btn-secondary" style={{ textDecoration: "none" }}>
             ייצוא JSON
           </a>
+          <button className="btn btn-secondary" onClick={() => setImporting(true)}>
+            ייבוא אוטומטי
+          </button>
           <button className="btn btn-primary" onClick={() => setEditingCoupon("new")}>
             + שובר חדש
           </button>
@@ -126,10 +132,26 @@ export default function App() {
       {editingCoupon && (
         <CouponForm
           initial={editingCoupon === "new" ? undefined : editingCoupon}
-          onCancel={() => setEditingCoupon(null)}
+          prefill={editingCoupon === "new" ? (prefillData ?? undefined) : undefined}
+          onCancel={() => {
+            setEditingCoupon(null);
+            setPrefillData(null);
+          }}
           onSaved={() => {
             setEditingCoupon(null);
+            setPrefillData(null);
             loadCoupons();
+          }}
+        />
+      )}
+
+      {importing && (
+        <ImportModal
+          onCancel={() => setImporting(false)}
+          onExtracted={(prefill) => {
+            setPrefillData(prefill);
+            setImporting(false);
+            setEditingCoupon("new");
           }}
         />
       )}

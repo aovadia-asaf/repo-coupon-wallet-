@@ -1,4 +1,4 @@
-import type { Coupon, CouponInput } from "../types";
+import type { Coupon, CouponInput, ExtractedFields } from "../types";
 
 class ApiError extends Error {
   status: number;
@@ -64,6 +64,25 @@ export const api = {
     const res = await fetch("/api/upload", { method: "POST", credentials: "include", body: form });
     if (!res.ok) {
       let message = `שגיאה בהעלאת תמונה (${res.status})`;
+      try {
+        const data = await res.json();
+        if (data?.error) message = data.error;
+      } catch {
+        /* ignore */
+      }
+      throw new ApiError(message, res.status);
+    }
+    return res.json();
+  },
+
+  extractCoupon: async (
+    file: File,
+  ): Promise<{ path: string; isPdfSourced: boolean; extracted: ExtractedFields }> => {
+    const form = new FormData();
+    form.append("image", file, file.name);
+    const res = await fetch("/api/import/extract", { method: "POST", credentials: "include", body: form });
+    if (!res.ok) {
+      let message = `שגיאה בזיהוי אוטומטי (${res.status})`;
       try {
         const data = await res.json();
         if (data?.error) message = data.error;

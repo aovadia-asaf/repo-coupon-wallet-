@@ -30,6 +30,17 @@ export interface Coupon {
   status: ExpiryStatus;
 }
 
+export interface ExtractedFields {
+  title: string;
+  store: string | null;
+  category: Category;
+  value: string | null;
+  expiry: string | null;
+  code: string | null;
+  codeType: CodeType | null;
+  notes: string | null;
+}
+
 export interface CouponInput {
   title: string;
   store?: string | null;

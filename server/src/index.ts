@@ -8,6 +8,7 @@ import { UPLOAD_DIR } from "./config";
 import { requireAuth } from "./middleware/auth";
 import authRouter from "./routes/auth";
 import couponsRouter from "./routes/coupons";
+import extractRouter from "./routes/extract";
 import uploadRouter from "./routes/upload";
 
 const app = express();
@@ -33,6 +34,7 @@ app.use("/api/auth", authRouter);
 app.use("/uploads", requireAuth, express.static(UPLOAD_DIR));
 app.use("/api/coupons", requireAuth, couponsRouter);
 app.use("/api/upload", requireAuth, uploadRouter);
+app.use("/api/import/extract", requireAuth, extractRouter);
 
 if (isProduction) {
   const clientDist = path.join(__dirname, "..", "..", "client", "dist");
