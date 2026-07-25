@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "./api/client";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { CouponCard } from "./components/CouponCard";
 import { CouponForm } from "./components/CouponForm";
+import { CouponListView } from "./components/CouponListView";
 import { DuplicateBanner } from "./components/DuplicateBanner";
 import { FilterBar, type Filters } from "./components/FilterBar";
 import { ImportModal } from "./components/ImportModal";
@@ -20,6 +21,7 @@ export default function App() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [view, setView] = useState<View>("active");
+  const [displayMode, setDisplayMode] = useState<"grid" | "list">("grid");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,7 +46,6 @@ export default function App() {
         q: filters.q,
         store: filters.store,
         category: filters.category,
-        status: filters.status,
         view,
       });
       setCoupons(data);
@@ -59,7 +60,12 @@ export default function App() {
     if (!authenticated) return;
     loadCoupons();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authenticated, filters, view]);
+  }, [authenticated, filters.q, filters.store, filters.category, view]);
+
+  const displayedCoupons = useMemo(
+    () => (view === "active" && filters.status ? coupons.filter((c) => c.status === filters.status) : coupons),
+    [coupons, view, filters.status],
+  );
 
   if (!authChecked) return null;
 
@@ -99,11 +105,43 @@ export default function App() {
         </div>
       </header>
 
-      <ViewTabs view={view} onChange={setView} />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <ViewTabs view={view} onChange={setView} />
+        <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => setDisplayMode("grid")}
+            style={{
+              background: displayMode === "grid" ? "var(--accent)" : "transparent",
+              color: displayMode === "grid" ? "#fff" : "var(--ink-soft)",
+              border: displayMode === "grid" ? "none" : "1.5px solid var(--line)",
+            }}
+          >
+            כרטיסים
+          </button>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => setDisplayMode("list")}
+            style={{
+              background: displayMode === "list" ? "var(--accent)" : "transparent",
+              color: displayMode === "list" ? "#fff" : "var(--ink-soft)",
+              border: displayMode === "list" ? "none" : "1.5px solid var(--line)",
+            }}
+          >
+            רשימה
+          </button>
+        </div>
+      </div>
 
       {view === "active" && (
         <>
-          <SummaryBanner coupons={coupons} />
+          <SummaryBanner
+            coupons={coupons}
+            activeStatus={filters.status}
+            onSelectStatus={(status) => setFilters({ ...filters, status })}
+          />
           <DuplicateBanner coupons={coupons} />
         </>
       )}
@@ -112,22 +150,28 @@ export default function App() {
       {loading && <p>טוען...</p>}
       {error && <p style={{ color: "var(--expired)" }}>{error}</p>}
 
-      {!loading && coupons.length === 0 && (
+      {!loading && displayedCoupons.length === 0 && (
         <p style={{ color: "var(--ink-soft)", textAlign: "center", marginTop: 40 }}>אין שוברים להצגה.</p>
       )}
 
-      <div className="grid">
-        {coupons.map((coupon) => (
-          <CouponCard
-            key={coupon.id}
-            coupon={coupon}
-            onEdit={() => setEditingCoupon(coupon)}
-            onDelete={() => setDeletingCoupon(coupon)}
-            onToggleRedeemed={() => handleToggleRedeemed(coupon)}
-            onPresent={() => setPresentingCoupon(coupon)}
-          />
-        ))}
-      </div>
+      {displayMode === "list" ? (
+        displayedCoupons.length > 0 && (
+          <CouponListView coupons={displayedCoupons} onSelect={(coupon) => setPresentingCoupon(coupon)} />
+        )
+      ) : (
+        <div className="grid">
+          {displayedCoupons.map((coupon) => (
+            <CouponCard
+              key={coupon.id}
+              coupon={coupon}
+              onEdit={() => setEditingCoupon(coupon)}
+              onDelete={() => setDeletingCoupon(coupon)}
+              onToggleRedeemed={() => handleToggleRedeemed(coupon)}
+              onPresent={() => setPresentingCoupon(coupon)}
+            />
+          ))}
+        </div>
+      )}
 
       {editingCoupon && (
         <CouponForm

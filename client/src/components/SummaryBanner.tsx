@@ -1,14 +1,20 @@
-import type { Coupon } from "../types";
+import type { Coupon, ExpiryStatus } from "../types";
 
 interface Props {
   coupons: Coupon[];
+  activeStatus: ExpiryStatus | "";
+  onSelectStatus: (status: ExpiryStatus | "") => void;
 }
 
-export function SummaryBanner({ coupons }: Props) {
+export function SummaryBanner({ coupons, activeStatus, onSelectStatus }: Props) {
   const active = coupons.filter((c) => !c.redeemed);
   const valid = active.filter((c) => c.status === "valid").length;
   const soon = active.filter((c) => c.status === "soon").length;
   const expired = active.filter((c) => c.status === "expired").length;
+
+  function toggle(status: ExpiryStatus) {
+    onSelectStatus(activeStatus === status ? "" : status);
+  }
 
   return (
     <div
@@ -19,17 +25,57 @@ export function SummaryBanner({ coupons }: Props) {
         marginBottom: 20,
       }}
     >
-      <SummaryStat label="בתוקף" value={valid} className="status-valid" />
-      <SummaryStat label="נגמר בקרוב" value={soon} className="status-soon" />
-      <SummaryStat label="פג תוקף" value={expired} className="status-expired" />
+      <SummaryStat
+        label="בתוקף"
+        value={valid}
+        className="status-valid"
+        selected={activeStatus === "valid"}
+        onClick={() => toggle("valid")}
+      />
+      <SummaryStat
+        label="נגמר בקרוב"
+        value={soon}
+        className="status-soon"
+        selected={activeStatus === "soon"}
+        onClick={() => toggle("soon")}
+      />
+      <SummaryStat
+        label="פג תוקף"
+        value={expired}
+        className="status-expired"
+        selected={activeStatus === "expired"}
+        onClick={() => toggle("expired")}
+      />
     </div>
   );
 }
 
-function SummaryStat({ label, value, className }: { label: string; value: number; className: string }) {
+function SummaryStat({
+  label,
+  value,
+  className,
+  selected,
+  onClick,
+}: {
+  label: string;
+  value: number;
+  className: string;
+  selected: boolean;
+  onClick: () => void;
+}) {
   return (
-    <div className={`status-badge ${className}`} style={{ fontSize: "0.95rem", padding: "8px 16px" }}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`status-badge ${className}`}
+      style={{
+        fontSize: "0.95rem",
+        padding: "8px 16px",
+        border: selected ? "2px solid currentColor" : "2px solid transparent",
+        cursor: "pointer",
+      }}
+    >
       <strong>{value}</strong> {label}
-    </div>
+    </button>
   );
 }
