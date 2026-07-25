@@ -1,0 +1,227 @@
+:root {
+  --paper: #f3ead9;
+  --paper-card: #fbf5e9;
+  --paper-shadow: #d9cbae;
+  --ink: #2b2118;
+  --ink-soft: #6b5d4c;
+  --accent: #c8542c;
+  --accent-dark: #a5401f;
+  --line: #d8c9a8;
+  --valid: #3f7d4f;
+  --soon: #b8862b;
+  --expired: #b0362c;
+  --font-heading: "Rubik", "Heebo", sans-serif;
+  --font-body: "Heebo", "Rubik", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  background-image: radial-gradient(circle at 1px 1px, rgba(43, 33, 24, 0.04) 1px, transparent 0);
+  background-size: 18px 18px;
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+  margin: 0;
+}
+
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+input,
+select,
+textarea {
+  font-family: var(--font-body);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* ---------- Ticket card ---------- */
+.ticket {
+  position: relative;
+  background: var(--paper-card);
+  border-radius: 10px;
+  box-shadow: 0 2px 0 var(--paper-shadow), 0 6px 16px rgba(43, 33, 24, 0.12);
+  padding: 18px 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ticket::before,
+.ticket::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background-image: radial-gradient(circle 5px, var(--paper) 5px, transparent 5.5px);
+  background-size: 20px 10px;
+  background-repeat: repeat-x;
+}
+
+.ticket::before {
+  top: -5px;
+}
+
+.ticket::after {
+  bottom: -5px;
+  background-position: 10px 0;
+}
+
+.ticket-tear {
+  border-top: 2px dashed var(--line);
+  margin: 4px 0;
+}
+
+/* ---------- Layout helpers ---------- */
+.app-shell {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 24px 16px 80px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  width: fit-content;
+}
+
+.status-valid {
+  background: color-mix(in srgb, var(--valid) 15%, transparent);
+  color: var(--valid);
+}
+
+.status-soon {
+  background: color-mix(in srgb, var(--soon) 18%, transparent);
+  color: var(--soon);
+}
+
+.status-expired {
+  background: color-mix(in srgb, var(--expired) 15%, transparent);
+  color: var(--expired);
+}
+
+.btn {
+  border: none;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: transform 0.05s ease, opacity 0.15s ease;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--accent-dark);
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1.5px solid var(--line);
+  color: var(--ink);
+}
+
+.btn-danger {
+  background: transparent;
+  border: 1.5px solid var(--expired);
+  color: var(--expired);
+}
+
+.btn-ghost {
+  background: transparent;
+  border: none;
+  color: var(--ink-soft);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.field input,
+.field select,
+.field textarea {
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 10px;
+  font-size: 0.95rem;
+  background: #fff;
+  color: var(--ink);
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(43, 33, 24, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 16px;
+}
+
+.modal-box {
+  background: var(--paper-card);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 480px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
