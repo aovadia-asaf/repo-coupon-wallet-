@@ -80,9 +80,17 @@ export default function App() {
     <div className="app-shell">
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <h1 style={{ fontSize: "1.6rem" }}>🎟️ ארנק הקופונים המשפחתי</h1>
-        <button className="btn btn-primary" onClick={() => setEditingCoupon("new")}>
-          + שובר חדש
-        </button>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <a href="/api/coupons/export?format=csv" className="btn btn-secondary" style={{ textDecoration: "none" }}>
+            ייצוא CSV
+          </a>
+          <a href="/api/coupons/export?format=json" className="btn btn-secondary" style={{ textDecoration: "none" }}>
+            ייצוא JSON
+          </a>
+          <button className="btn btn-primary" onClick={() => setEditingCoupon("new")}>
+            + שובר חדש
+          </button>
+        </div>
       </header>
 
       <ViewTabs view={view} onChange={setView} />

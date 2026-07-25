@@ -66,6 +66,55 @@ router.get("/", async (req, res) => {
   res.json(result);
 });
 
+const EXPORT_COLUMNS = [
+  "title",
+  "store",
+  "category",
+  "value",
+  "expiry",
+  "code",
+  "codeType",
+  "notes",
+  "redeemed",
+  "redeemedAt",
+  "createdAt",
+  "imagePath",
+  "imageIsPdfSourced",
+  "status",
+] as const;
+
+function csvEscape(value: unknown): string {
+  const s =
+    value === null || value === undefined
+      ? ""
+      : value instanceof Date
+        ? value.toISOString()
+        : String(value);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+router.get("/export", async (req, res) => {
+  const format = req.query.format === "csv" ? "csv" : "json";
+  const coupons = await prisma.coupon.findMany({ orderBy: { createdAt: "desc" } });
+  const result = coupons.map(serialize);
+  const dateStamp = new Date().toISOString().slice(0, 10);
+
+  if (format === "csv") {
+    const rows = result.map((c) =>
+      EXPORT_COLUMNS.map((col) => csvEscape((c as Record<string, unknown>)[col])).join(","),
+    );
+    const csv = [EXPORT_COLUMNS.join(","), ...rows].join("\n");
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="coupons-${dateStamp}.csv"`);
+    res.send(`﻿${csv}`);
+    return;
+  }
+
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename="coupons-${dateStamp}.json"`);
+  res.send(JSON.stringify(result, null, 2));
+});
+
 router.get("/:id", async (req, res) => {
   const coupon = await prisma.coupon.findUnique({ where: { id: req.params.id } });
   if (!coupon) {
