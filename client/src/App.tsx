@@ -3,10 +3,13 @@ import { api } from "./api/client";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { CouponCard } from "./components/CouponCard";
 import { CouponForm } from "./components/CouponForm";
+import { DuplicateBanner } from "./components/DuplicateBanner";
 import { FilterBar, type Filters } from "./components/FilterBar";
 import { LoginScreen } from "./components/LoginScreen";
+import { PresentView } from "./components/PresentView";
 import { SummaryBanner } from "./components/SummaryBanner";
 import type { Coupon } from "./types";
+import { ViewTabs, type View } from "./components/ViewTabs";
 
 const EMPTY_FILTERS: Filters = { q: "", store: "", category: "", status: "" };
 
@@ -15,11 +18,13 @@ export default function App() {
   const [authenticated, setAuthenticated] = useState(false);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const [view, setView] = useState<View>("active");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [editingCoupon, setEditingCoupon] = useState<Coupon | "new" | null>(null);
   const [deletingCoupon, setDeletingCoupon] = useState<Coupon | null>(null);
+  const [presentingCoupon, setPresentingCoupon] = useState<Coupon | null>(null);
 
   useEffect(() => {
     api
@@ -37,6 +42,7 @@ export default function App() {
         store: filters.store,
         category: filters.category,
         status: filters.status,
+        view,
       });
       setCoupons(data);
     } catch (err) {
@@ -50,7 +56,7 @@ export default function App() {
     if (!authenticated) return;
     loadCoupons();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authenticated, filters]);
+  }, [authenticated, filters, view]);
 
   if (!authChecked) return null;
 
@@ -79,8 +85,15 @@ export default function App() {
         </button>
       </header>
 
-      <SummaryBanner coupons={coupons} />
-      <FilterBar filters={filters} onChange={setFilters} />
+      <ViewTabs view={view} onChange={setView} />
+
+      {view === "active" && (
+        <>
+          <SummaryBanner coupons={coupons} />
+          <DuplicateBanner coupons={coupons} />
+        </>
+      )}
+      <FilterBar filters={filters} onChange={setFilters} hideStatus={view === "redeemed"} />
 
       {loading && <p>טוען...</p>}
       {error && <p style={{ color: "var(--expired)" }}>{error}</p>}
@@ -97,6 +110,7 @@ export default function App() {
             onEdit={() => setEditingCoupon(coupon)}
             onDelete={() => setDeletingCoupon(coupon)}
             onToggleRedeemed={() => handleToggleRedeemed(coupon)}
+            onPresent={() => setPresentingCoupon(coupon)}
           />
         ))}
       </div>
@@ -121,6 +135,8 @@ export default function App() {
           onCancel={() => setDeletingCoupon(null)}
         />
       )}
+
+      {presentingCoupon && <PresentView coupon={presentingCoupon} onClose={() => setPresentingCoupon(null)} />}
     </div>
   );
 }

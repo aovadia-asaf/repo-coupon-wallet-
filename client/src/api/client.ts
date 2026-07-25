@@ -58,7 +58,7 @@ export const api = {
       body: JSON.stringify({ redeemed }),
     }),
 
-  uploadImage: async (file: Blob, filename: string): Promise<{ path: string }> => {
+  uploadImage: async (file: Blob, filename: string): Promise<{ path: string; isPdfSourced: boolean }> => {
     const form = new FormData();
     form.append("image", file, filename);
     const res = await fetch("/api/upload", { method: "POST", credentials: "include", body: form });

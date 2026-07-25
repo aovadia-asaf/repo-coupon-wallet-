@@ -24,16 +24,33 @@ export function CouponForm({ initial, onSaved, onCancel }: Props) {
   const [codeType, setCodeType] = useState<CodeType | "">(initial?.codeType ?? "");
   const [notes, setNotes] = useState(initial?.notes ?? "");
   const [imagePath, setImagePath] = useState(initial?.imagePath ?? "");
+  const [imageIsPdfSourced, setImageIsPdfSourced] = useState(initial?.imageIsPdfSourced ?? false);
 
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function handleFileSelect(e: ChangeEvent<HTMLInputElement>) {
+  async function handleFileSelect(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
+
+    if (file.type === "application/pdf") {
+      setUploading(true);
+      setError(null);
+      try {
+        const { path, isPdfSourced } = await api.uploadImage(file, file.name);
+        setImagePath(path);
+        setImageIsPdfSourced(isPdfSourced);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "העלאה נכשלה");
+      } finally {
+        setUploading(false);
+      }
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = () => setCropSrc(reader.result as string);
     reader.readAsDataURL(file);
@@ -43,8 +60,9 @@ export function CouponForm({ initial, onSaved, onCancel }: Props) {
     setUploading(true);
     setError(null);
     try {
-      const { path } = await api.uploadImage(blob, "coupon.jpg");
+      const { path, isPdfSourced } = await api.uploadImage(blob, "coupon.jpg");
       setImagePath(path);
+      setImageIsPdfSourced(isPdfSourced);
       setCropSrc(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "העלאה נכשלה");
@@ -71,6 +89,7 @@ export function CouponForm({ initial, onSaved, onCancel }: Props) {
       codeType: codeType || null,
       notes: notes.trim() || null,
       imagePath: imagePath || null,
+      imageIsPdfSourced,
     };
     try {
       if (initial) {
@@ -142,12 +161,19 @@ export function CouponForm({ initial, onSaved, onCancel }: Props) {
               {imagePath ? (
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                   <img src={imagePath} alt="תצוגה מקדימה" style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8 }} />
-                  <button type="button" className="btn btn-ghost" onClick={() => setImagePath("")}>
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() => {
+                      setImagePath("");
+                      setImageIsPdfSourced(false);
+                    }}
+                  >
                     הסרה
                   </button>
                 </div>
               ) : (
-                <input type="file" accept="image/*" onChange={handleFileSelect} disabled={uploading} />
+                <input type="file" accept="image/*,application/pdf" onChange={handleFileSelect} disabled={uploading} />
               )}
               {uploading && <p style={{ fontSize: "0.85rem", color: "var(--ink-soft)" }}>מעלה תמונה...</p>}
             </div>

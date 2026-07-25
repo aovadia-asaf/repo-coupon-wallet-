@@ -42,7 +42,7 @@ function serialize(coupon: Awaited<ReturnType<typeof prisma.coupon.findFirstOrTh
 }
 
 router.get("/", async (req, res) => {
-  const { store, category, status, q } = req.query as Record<string, string | undefined>;
+  const { store, category, status, q, view } = req.query as Record<string, string | undefined>;
 
   const where: Record<string, unknown> = {};
   if (store) where.store = { contains: store };
@@ -54,13 +54,12 @@ router.get("/", async (req, res) => {
       { notes: { contains: q } },
     ];
   }
-  if (status === "redeemed") where.redeemed = true;
-  else if (status && status !== "all") where.redeemed = false;
+  where.redeemed = view === "redeemed";
 
   const coupons = await prisma.coupon.findMany({ where, orderBy: { createdAt: "desc" } });
   let result = coupons.map(serialize);
 
-  if (status === "valid" || status === "soon" || status === "expired") {
+  if (view !== "redeemed" && (status === "valid" || status === "soon" || status === "expired")) {
     result = result.filter((c) => c.status === status);
   }
 

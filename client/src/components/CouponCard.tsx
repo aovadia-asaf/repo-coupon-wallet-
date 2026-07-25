@@ -5,6 +5,7 @@ interface Props {
   onEdit: () => void;
   onDelete: () => void;
   onToggleRedeemed: () => void;
+  onPresent: () => void;
 }
 
 function formatDate(iso: string | null): string {
@@ -12,7 +13,7 @@ function formatDate(iso: string | null): string {
   return new Date(iso).toLocaleDateString("he-IL");
 }
 
-export function CouponCard({ coupon, onEdit, onDelete, onToggleRedeemed }: Props) {
+export function CouponCard({ coupon, onEdit, onDelete, onToggleRedeemed, onPresent }: Props) {
   return (
     <div className="ticket" style={{ opacity: coupon.redeemed ? 0.6 : 1 }}>
       {coupon.imagePath && (
@@ -48,6 +49,11 @@ export function CouponCard({ coupon, onEdit, onDelete, onToggleRedeemed }: Props
         </p>
       )}
       <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+        {(coupon.code || coupon.imagePath) && (
+          <button className="btn btn-primary" onClick={onPresent}>
+            הצגת שובר
+          </button>
+        )}
         <button className="btn btn-secondary" onClick={onEdit}>
           עריכה
         </button>
