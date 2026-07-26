@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import jsQR from "jsqr";
 import multer from "multer";
 import sharp from "sharp";
 import { v4 as uuidv4 } from "uuid";
@@ -59,6 +60,23 @@ export async function processUploadedFile(
     return { filename: pngFilename, mimeType: "image/png", isPdfSourced: true };
   }
   return { filename: file.filename, mimeType: file.mimetype, isPdfSourced: false };
+}
+
+/**
+ * Reads the actual payload of a QR code found in the image, if any. The printed reference number next
+ * to a QR on a ticket (which is what AI/OCR reads) is often just a human-entry fallback, not the same
+ * string the scanner reads from the QR itself — so this decodes the real code directly from the pixels.
+ */
+export async function decodeQrFromImage(sourceFilename: string): Promise<string | null> {
+  const sourcePath = path.join(UPLOAD_DIR, sourceFilename);
+  const { data, info } = await sharp(sourcePath)
+    .resize(3000, 3000, { fit: "inside", withoutEnlargement: true })
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const pixels = new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength);
+  const result = jsQR(pixels, info.width, info.height);
+  return result?.data ?? null;
 }
 
 /** Smart-crops the given image to a square-ish thumbnail, focusing on the most visually interesting region. */

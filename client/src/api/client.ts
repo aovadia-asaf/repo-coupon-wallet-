@@ -1,4 +1,4 @@
-import type { Coupon, CouponInput, ExtractedFields } from "../types";
+import type { CodeType, Coupon, CouponInput, ExtractedFields } from "../types";
 
 class ApiError extends Error {
   status: number;
@@ -61,7 +61,7 @@ export const api = {
   uploadImage: async (
     file: Blob,
     filename: string,
-  ): Promise<{ path: string; isPdfSourced: boolean; thumbnailPath: string }> => {
+  ): Promise<{ path: string; isPdfSourced: boolean; thumbnailPath: string; code?: string; codeType?: CodeType }> => {
     const form = new FormData();
     form.append("image", file, filename);
     const res = await fetch("/api/upload", { method: "POST", credentials: "include", body: form });

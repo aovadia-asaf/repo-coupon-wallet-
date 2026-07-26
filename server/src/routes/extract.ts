@@ -6,7 +6,7 @@ import { Router } from "express";
 import { z } from "zod/v4";
 import { CATEGORIES } from "../constants";
 import { UPLOAD_DIR } from "../config";
-import { generateThumbnail, generateThumbnailFromRegion, processUploadedFile, upload } from "../imageProcessing";
+import { decodeQrFromImage, generateThumbnail, generateThumbnailFromRegion, processUploadedFile, upload } from "../imageProcessing";
 
 const router = Router();
 
@@ -89,6 +89,14 @@ router.post("/", upload.single("image"), async (req, res) => {
     const thumbnailFilename = photoRegion
       ? await generateThumbnailFromRegion(filename, photoRegion)
       : await generateThumbnail(filename);
+
+    // A decoded QR payload is ground truth for what the scanner reads — it can differ from the
+    // printed reference number the AI read off the ticket, so it takes priority when present.
+    const decodedQr = await decodeQrFromImage(filename).catch(() => null);
+    if (decodedQr) {
+      extracted.code = decodedQr;
+      extracted.codeType = "qr";
+    }
 
     res.status(201).json({
       path: `/uploads/${filename}`,

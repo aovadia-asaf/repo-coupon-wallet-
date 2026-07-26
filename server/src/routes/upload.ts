@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import { Router } from "express";
-import { generateThumbnail, processUploadedFile, upload } from "../imageProcessing";
+import { decodeQrFromImage, generateThumbnail, processUploadedFile, upload } from "../imageProcessing";
 
 const router = Router();
 
@@ -13,10 +13,12 @@ router.post("/", upload.single("image"), async (req, res) => {
   try {
     const { filename, isPdfSourced } = await processUploadedFile(req.file);
     const thumbnailFilename = await generateThumbnail(filename);
+    const decodedQr = await decodeQrFromImage(filename).catch(() => null);
     res.status(201).json({
       path: `/uploads/${filename}`,
       isPdfSourced,
       thumbnailPath: `/uploads/${thumbnailFilename}`,
+      ...(decodedQr && { code: decodedQr, codeType: "qr" as const }),
     });
   } catch (err) {
     await fs.unlink(req.file.path).catch(() => {});

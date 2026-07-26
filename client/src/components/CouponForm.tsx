@@ -69,10 +69,15 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
       setUploading(target);
       setError(null);
       try {
-        const { path, isPdfSourced, thumbnailPath: autoThumb } = await api.uploadImage(file, file.name);
+        const { path, isPdfSourced, thumbnailPath: autoThumb, code: decodedCode, codeType: decodedCodeType } =
+          await api.uploadImage(file, file.name);
         setImagePath(path);
         setImageIsPdfSourced(isPdfSourced);
         if (autoThumb) setThumbnailPath(autoThumb);
+        if (decodedCode && !code) {
+          setCode(decodedCode);
+          setCodeType(decodedCodeType ?? "qr");
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "העלאה נכשלה");
       } finally {
@@ -92,13 +97,18 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
     setUploading(target);
     setError(null);
     try {
-      const { path, isPdfSourced, thumbnailPath: autoThumb } = await api.uploadImage(blob, "coupon.jpg");
+      const { path, isPdfSourced, thumbnailPath: autoThumb, code: decodedCode, codeType: decodedCodeType } =
+        await api.uploadImage(blob, "coupon.jpg");
       if (target === "thumbnail") {
         setThumbnailPath(path);
       } else {
         setImagePath(path);
         setImageIsPdfSourced(isPdfSourced);
         if (autoThumb) setThumbnailPath(autoThumb);
+        if (decodedCode && !code) {
+          setCode(decodedCode);
+          setCodeType(decodedCodeType ?? "qr");
+        }
       }
       setCropSrc(null);
       setCropTarget(null);
