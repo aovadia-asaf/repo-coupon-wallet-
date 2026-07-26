@@ -10,6 +10,8 @@ interface Props {
   onCancel: () => void;
 }
 
+type ImageTarget = "main" | "thumbnail";
+
 function toDateInputValue(iso: string | null | undefined): string {
   if (!iso) return "";
   return iso.slice(0, 10);
@@ -27,19 +29,21 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
   const [notes, setNotes] = useState(source?.notes ?? "");
   const [imagePath, setImagePath] = useState(source?.imagePath ?? "");
   const [imageIsPdfSourced, setImageIsPdfSourced] = useState(source?.imageIsPdfSourced ?? false);
+  const [thumbnailPath, setThumbnailPath] = useState(source?.thumbnailPath ?? "");
 
   const [cropSrc, setCropSrc] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [cropTarget, setCropTarget] = useState<ImageTarget | null>(null);
+  const [uploading, setUploading] = useState<ImageTarget | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleFileSelect(e: ChangeEvent<HTMLInputElement>) {
+  async function handleFileSelect(e: ChangeEvent<HTMLInputElement>, target: ImageTarget) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
 
-    if (file.type === "application/pdf") {
-      setUploading(true);
+    if (target === "main" && file.type === "application/pdf") {
+      setUploading(target);
       setError(null);
       try {
         const { path, isPdfSourced } = await api.uploadImage(file, file.name);
@@ -48,28 +52,35 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
       } catch (err) {
         setError(err instanceof Error ? err.message : "העלאה נכשלה");
       } finally {
-        setUploading(false);
+        setUploading(null);
       }
       return;
     }
 
+    setCropTarget(target);
     const reader = new FileReader();
     reader.onload = () => setCropSrc(reader.result as string);
     reader.readAsDataURL(file);
   }
 
   async function handleCropConfirm(blob: Blob) {
-    setUploading(true);
+    const target = cropTarget ?? "main";
+    setUploading(target);
     setError(null);
     try {
       const { path, isPdfSourced } = await api.uploadImage(blob, "coupon.jpg");
-      setImagePath(path);
-      setImageIsPdfSourced(isPdfSourced);
+      if (target === "thumbnail") {
+        setThumbnailPath(path);
+      } else {
+        setImagePath(path);
+        setImageIsPdfSourced(isPdfSourced);
+      }
       setCropSrc(null);
+      setCropTarget(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "העלאה נכשלה");
     } finally {
-      setUploading(false);
+      setUploading(null);
     }
   }
 
@@ -92,6 +103,7 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
       notes: notes.trim() || null,
       imagePath: imagePath || null,
       imageIsPdfSourced,
+      thumbnailPath: thumbnailPath || null,
     };
     try {
       if (initial) {
@@ -113,7 +125,14 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
         <h2 style={{ marginBottom: 16 }}>{initial ? "עריכת שובר" : "שובר חדש"}</h2>
 
         {cropSrc ? (
-          <CropTool src={cropSrc} onCancel={() => setCropSrc(null)} onConfirm={handleCropConfirm} />
+          <CropTool
+            src={cropSrc}
+            onCancel={() => {
+              setCropSrc(null);
+              setCropTarget(null);
+            }}
+            onConfirm={handleCropConfirm}
+          />
         ) : (
           <form onSubmit={handleSubmit}>
             <div className="field">
@@ -159,7 +178,7 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
               <textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
             </div>
             <div className="field">
-              <label>תמונה</label>
+              <label>קובץ השובר (תמונה או PDF)</label>
               {imagePath ? (
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                   <img src={imagePath} alt="תצוגה מקדימה" style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8 }} />
@@ -175,9 +194,36 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
                   </button>
                 </div>
               ) : (
-                <input type="file" accept="image/*,application/pdf" onChange={handleFileSelect} disabled={uploading} />
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={(e) => handleFileSelect(e, "main")}
+                  disabled={uploading !== null}
+                />
               )}
-              {uploading && <p style={{ fontSize: "0.85rem", color: "var(--ink-soft)" }}>מעלה תמונה...</p>}
+              {uploading === "main" && <p style={{ fontSize: "0.85rem", color: "var(--ink-soft)" }}>מעלה קובץ...</p>}
+            </div>
+            <div className="field">
+              <label>תמונה לתצוגה (לא חובה)</label>
+              <p style={{ fontSize: "0.8rem", color: "var(--ink-soft)", margin: "0 0 6px" }}>
+                תמונה קטנה שתוצג בכרטיס וברשימה — אם לא תעלו, תוצג תמונת קובץ השובר.
+              </p>
+              {thumbnailPath ? (
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <img src={thumbnailPath} alt="תמונת תצוגה" style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8 }} />
+                  <button type="button" className="btn btn-ghost" onClick={() => setThumbnailPath("")}>
+                    הסרה
+                  </button>
+                </div>
+              ) : (
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleFileSelect(e, "thumbnail")}
+                  disabled={uploading !== null}
+                />
+              )}
+              {uploading === "thumbnail" && <p style={{ fontSize: "0.85rem", color: "var(--ink-soft)" }}>מעלה תמונה...</p>}
             </div>
 
             {error && <p style={{ color: "var(--expired)", marginBottom: 12 }}>{error}</p>}
@@ -186,7 +232,7 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
               <button type="button" className="btn btn-secondary" onClick={onCancel}>
                 ביטול
               </button>
-              <button type="submit" className="btn btn-primary" disabled={saving || uploading}>
+              <button type="submit" className="btn btn-primary" disabled={saving || uploading !== null}>
                 {saving ? "שומר..." : "שמירה"}
               </button>
             </div>

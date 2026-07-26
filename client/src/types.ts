@@ -23,6 +23,7 @@ export interface Coupon {
   notes: string | null;
   imagePath: string | null;
   imageIsPdfSourced: boolean;
+  thumbnailPath: string | null;
   redeemed: boolean;
   redeemedAt: string | null;
   createdAt: string;
@@ -52,6 +53,7 @@ export interface CouponInput {
   notes?: string | null;
   imagePath?: string | null;
   imageIsPdfSourced?: boolean;
+  thumbnailPath?: string | null;
 }
 
 export const CATEGORY_LABELS: Record<Category, string> = {

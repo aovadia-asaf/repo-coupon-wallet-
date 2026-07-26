@@ -19,6 +19,7 @@ model Coupon {
   notes             String?
   imagePath         String?
   imageIsPdfSourced Boolean   @default(false)
+  thumbnailPath     String?
   redeemed          Boolean   @default(false)
   redeemedAt        DateTime?
   createdAt         DateTime  @default(now())

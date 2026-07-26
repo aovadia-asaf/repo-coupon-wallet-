@@ -16,6 +16,7 @@ const couponInputSchema = z.object({
   notes: z.string().optional().nullable(),
   imagePath: z.string().optional().nullable(),
   imageIsPdfSourced: z.boolean().optional().default(false),
+  thumbnailPath: z.string().optional().nullable(),
 });
 
 function expiryStatus(expiry: Date | null): "valid" | "soon" | "expired" {
@@ -71,6 +72,7 @@ const EXPORT_COLUMNS = [
   "createdAt",
   "imagePath",
   "imageIsPdfSourced",
+  "thumbnailPath",
   "status",
 ] as const;
 
@@ -134,6 +136,7 @@ router.post("/", async (req, res) => {
       notes: data.notes ?? null,
       imagePath: data.imagePath ?? null,
       imageIsPdfSourced: data.imageIsPdfSourced ?? false,
+      thumbnailPath: data.thumbnailPath ?? null,
     },
   });
   res.status(201).json(serialize(coupon));
@@ -160,6 +163,7 @@ router.put("/:id", async (req, res) => {
         ...(data.notes !== undefined && { notes: data.notes }),
         ...(data.imagePath !== undefined && { imagePath: data.imagePath }),
         ...(data.imageIsPdfSourced !== undefined && { imageIsPdfSourced: data.imageIsPdfSourced }),
+        ...(data.thumbnailPath !== undefined && { thumbnailPath: data.thumbnailPath }),
       },
     });
     res.json(serialize(coupon));

@@ -14,11 +14,12 @@ function formatDate(iso: string | null): string {
 }
 
 export function CouponCard({ coupon, onEdit, onDelete, onToggleRedeemed, onPresent }: Props) {
+  const previewImage = coupon.thumbnailPath || coupon.imagePath;
   return (
     <div className="ticket" style={{ opacity: coupon.redeemed ? 0.6 : 1 }}>
-      {coupon.imagePath && (
+      {previewImage && (
         <img
-          src={coupon.imagePath}
+          src={previewImage}
           alt={coupon.title}
           style={{ width: "100%", height: 140, objectFit: "cover", borderRadius: 8 }}
         />
