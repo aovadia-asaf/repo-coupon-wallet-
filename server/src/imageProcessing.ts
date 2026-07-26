@@ -29,7 +29,7 @@ export const upload = multer({
 
 export async function convertPdfFirstPage(pdfPath: string): Promise<string> {
   const { pdf } = await import("pdf-to-img");
-  const document = await pdf(pdfPath, { scale: 2 });
+  const document = await pdf(pdfPath, { scale: 4 });
   let firstPage: Buffer | null = null;
   for await (const page of document) {
     firstPage = page;
@@ -38,9 +38,14 @@ export async function convertPdfFirstPage(pdfPath: string): Promise<string> {
   await document.destroy();
   if (!firstPage) throw new Error("לא ניתן להמיר את קובץ ה-PDF");
 
+  // Many PDF coupons/tickets are a small printed strip on an otherwise blank page;
+  // trimming the surrounding whitespace keeps the actual content legible at Claude's
+  // vision input size instead of being crushed down alongside empty margins.
+  const trimmed = await sharp(firstPage).trim().toBuffer();
+
   const pngFilename = `${uuidv4()}.png`;
   const pngPath = path.join(UPLOAD_DIR, pngFilename);
-  await fs.writeFile(pngPath, firstPage);
+  await fs.writeFile(pngPath, trimmed);
   await fs.unlink(pdfPath);
   return pngFilename;
 }

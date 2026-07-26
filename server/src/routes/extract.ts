@@ -63,7 +63,7 @@ router.post("/", upload.single("image"), async (req, res) => {
 
     const client = new Anthropic();
     const message = await client.messages.parse({
-      model: "claude-haiku-4-5",
+      model: "claude-sonnet-5",
       max_tokens: 1024,
       messages: [
         {

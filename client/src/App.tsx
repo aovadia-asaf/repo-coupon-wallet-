@@ -5,6 +5,7 @@ import { CouponCard } from "./components/CouponCard";
 import { CouponForm } from "./components/CouponForm";
 import { CouponListView } from "./components/CouponListView";
 import { DuplicateBanner } from "./components/DuplicateBanner";
+import { ExportMenu } from "./components/ExportMenu";
 import { FilterBar, type Filters } from "./components/FilterBar";
 import { ImportModal } from "./components/ImportModal";
 import { LoginScreen } from "./components/LoginScreen";
@@ -90,12 +91,7 @@ export default function App() {
       <header style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 24 }}>
         <h1 style={{ fontSize: "1.6rem" }}>🎟️ ארנק הקופונים המשפחתי</h1>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-          <a href="/api/coupons/export?format=csv" className="btn btn-secondary" style={{ textDecoration: "none" }}>
-            ייצוא CSV
-          </a>
-          <a href="/api/coupons/export?format=json" className="btn btn-secondary" style={{ textDecoration: "none" }}>
-            ייצוא JSON
-          </a>
+          <ExportMenu />
           <button className="btn btn-secondary" onClick={() => setImporting(true)}>
             ייבוא אוטומטי
           </button>
