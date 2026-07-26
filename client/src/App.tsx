@@ -12,9 +12,10 @@ import { LoginScreen } from "./components/LoginScreen";
 import { PresentView } from "./components/PresentView";
 import { SummaryBanner } from "./components/SummaryBanner";
 import type { Coupon, CouponInput } from "./types";
+import { findDuplicateGroups } from "./utils/duplicates";
 import { ViewTabs, type View } from "./components/ViewTabs";
 
-const EMPTY_FILTERS: Filters = { q: "", store: "", category: "", status: "" };
+const EMPTY_FILTERS: Filters = { q: "", store: "", category: "", status: [] };
 
 export default function App() {
   const [authChecked, setAuthChecked] = useState(false);
@@ -31,6 +32,7 @@ export default function App() {
   const [presentingCoupon, setPresentingCoupon] = useState<Coupon | null>(null);
   const [importing, setImporting] = useState(false);
   const [prefillData, setPrefillData] = useState<Partial<CouponInput> | null>(null);
+  const [showDuplicatesOnly, setShowDuplicatesOnly] = useState(false);
 
   useEffect(() => {
     api
@@ -63,10 +65,29 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authenticated, filters.q, filters.store, filters.category, view]);
 
-  const displayedCoupons = useMemo(
-    () => (view === "active" && filters.status ? coupons.filter((c) => c.status === filters.status) : coupons),
-    [coupons, view, filters.status],
+  const duplicateGroups = useMemo(() => findDuplicateGroups(coupons), [coupons]);
+  const duplicateIds = useMemo(
+    () => new Set(duplicateGroups.flat().map((c) => c.id)),
+    [duplicateGroups],
   );
+
+  const displayedCoupons = useMemo(() => {
+    let result = coupons;
+    if (view === "active" && filters.status.length > 0) {
+      result = result.filter((c) => filters.status.includes(c.status));
+    }
+    if (view === "active" && showDuplicatesOnly) {
+      result = result.filter((c) => duplicateIds.has(c.id));
+    }
+    return result;
+  }, [coupons, view, filters.status, showDuplicatesOnly, duplicateIds]);
+
+  function toggleStatusFilter(status: Coupon["status"]) {
+    setFilters((f) => ({
+      ...f,
+      status: f.status.includes(status) ? f.status.filter((s) => s !== status) : [...f.status, status],
+    }));
+  }
 
   if (!authChecked) return null;
 
@@ -133,15 +154,15 @@ export default function App() {
 
       {view === "active" && (
         <>
-          <SummaryBanner
-            coupons={coupons}
-            activeStatus={filters.status}
-            onSelectStatus={(status) => setFilters({ ...filters, status })}
+          <SummaryBanner coupons={coupons} activeStatuses={filters.status} onToggleStatus={toggleStatusFilter} />
+          <DuplicateBanner
+            groups={duplicateGroups}
+            showingOnly={showDuplicatesOnly}
+            onToggleShowOnly={() => setShowDuplicatesOnly((v) => !v)}
           />
-          <DuplicateBanner coupons={coupons} />
         </>
       )}
-      <FilterBar filters={filters} onChange={setFilters} hideStatus={view === "redeemed"} />
+      <FilterBar filters={filters} onChange={setFilters} />
 
       {loading && <p>טוען...</p>}
       {error && <p style={{ color: "var(--expired)" }}>{error}</p>}

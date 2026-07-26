@@ -1,41 +1,14 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { Coupon } from "../types";
 
 interface Props {
-  coupons: Coupon[];
+  groups: Coupon[][];
+  showingOnly: boolean;
+  onToggleShowOnly: () => void;
 }
 
-function normalize(value: string | null): string {
-  return (value ?? "").trim().toLowerCase();
-}
-
-function findDuplicateGroups(coupons: Coupon[]): Coupon[][] {
-  const byCode = new Map<string, Coupon[]>();
-  const byStoreTitle = new Map<string, Coupon[]>();
-
-  for (const coupon of coupons) {
-    if (coupon.code) {
-      const key = `code:${normalize(coupon.code)}`;
-      byCode.set(key, [...(byCode.get(key) ?? []), coupon]);
-    } else {
-      const key = `st:${normalize(coupon.store)}|${normalize(coupon.title)}`;
-      byStoreTitle.set(key, [...(byStoreTitle.get(key) ?? []), coupon]);
-    }
-  }
-
-  const groups: Coupon[][] = [];
-  for (const group of byCode.values()) {
-    if (group.length > 1) groups.push(group);
-  }
-  for (const group of byStoreTitle.values()) {
-    if (group.length > 1) groups.push(group);
-  }
-  return groups;
-}
-
-export function DuplicateBanner({ coupons }: Props) {
+export function DuplicateBanner({ groups, showingOnly, onToggleShowOnly }: Props) {
   const [dismissed, setDismissed] = useState(false);
-  const groups = useMemo(() => findDuplicateGroups(coupons), [coupons]);
 
   if (dismissed || groups.length === 0) return null;
 
@@ -55,11 +28,24 @@ export function DuplicateBanner({ coupons }: Props) {
         fontSize: "0.9rem",
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", width: "100%", gap: 8 }}>
         <strong>נמצאו {totalCount} שוברים שנראים כפולים</strong>
-        <button type="button" className="btn-ghost" onClick={() => setDismissed(true)} style={{ border: "none" }}>
-          סגירה
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button type="button" className="btn-ghost" onClick={onToggleShowOnly} style={{ border: "none" }}>
+            {showingOnly ? "הצג הכל" : "הצג כפולים בלבד"}
+          </button>
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={() => {
+              setDismissed(true);
+              if (showingOnly) onToggleShowOnly();
+            }}
+            style={{ border: "none" }}
+          >
+            סגירה
+          </button>
+        </div>
       </div>
       <ul style={{ margin: 0, paddingInlineStart: 20 }}>
         {groups.map((group) => (

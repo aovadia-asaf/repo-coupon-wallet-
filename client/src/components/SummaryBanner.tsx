@@ -2,19 +2,15 @@ import type { Coupon, ExpiryStatus } from "../types";
 
 interface Props {
   coupons: Coupon[];
-  activeStatus: ExpiryStatus | "";
-  onSelectStatus: (status: ExpiryStatus | "") => void;
+  activeStatuses: ExpiryStatus[];
+  onToggleStatus: (status: ExpiryStatus) => void;
 }
 
-export function SummaryBanner({ coupons, activeStatus, onSelectStatus }: Props) {
+export function SummaryBanner({ coupons, activeStatuses, onToggleStatus }: Props) {
   const active = coupons.filter((c) => !c.redeemed);
   const valid = active.filter((c) => c.status === "valid").length;
   const soon = active.filter((c) => c.status === "soon").length;
   const expired = active.filter((c) => c.status === "expired").length;
-
-  function toggle(status: ExpiryStatus) {
-    onSelectStatus(activeStatus === status ? "" : status);
-  }
 
   return (
     <div
@@ -29,22 +25,22 @@ export function SummaryBanner({ coupons, activeStatus, onSelectStatus }: Props) 
         label="בתוקף"
         value={valid}
         className="status-valid"
-        selected={activeStatus === "valid"}
-        onClick={() => toggle("valid")}
+        selected={activeStatuses.includes("valid")}
+        onClick={() => onToggleStatus("valid")}
       />
       <SummaryStat
         label="נגמר בקרוב"
         value={soon}
         className="status-soon"
-        selected={activeStatus === "soon"}
-        onClick={() => toggle("soon")}
+        selected={activeStatuses.includes("soon")}
+        onClick={() => onToggleStatus("soon")}
       />
       <SummaryStat
         label="פג תוקף"
         value={expired}
         className="status-expired"
-        selected={activeStatus === "expired"}
-        onClick={() => toggle("expired")}
+        selected={activeStatuses.includes("expired")}
+        onClick={() => onToggleStatus("expired")}
       />
     </div>
   );

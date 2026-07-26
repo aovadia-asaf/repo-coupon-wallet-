@@ -1,19 +1,18 @@
-import { CATEGORY_LABELS, type Category } from "../types";
+import { CATEGORY_LABELS, type Category, type ExpiryStatus } from "../types";
 
 export interface Filters {
   q: string;
   store: string;
   category: Category | "";
-  status: "" | "valid" | "soon" | "expired";
+  status: ExpiryStatus[];
 }
 
 interface Props {
   filters: Filters;
   onChange: (filters: Filters) => void;
-  hideStatus?: boolean;
 }
 
-export function FilterBar({ filters, onChange, hideStatus }: Props) {
+export function FilterBar({ filters, onChange }: Props) {
   return (
     <div
       style={{
@@ -60,18 +59,6 @@ export function FilterBar({ filters, onChange, hideStatus }: Props) {
           </option>
         ))}
       </select>
-      {!hideStatus && (
-        <select
-          value={filters.status}
-          onChange={(e) => onChange({ ...filters, status: e.target.value as Filters["status"] })}
-          style={{ border: "1.5px solid var(--line)", borderRadius: 8, padding: "9px 12px", background: "#fff" }}
-        >
-          <option value="">כל הסטטוסים</option>
-          <option value="valid">בתוקף</option>
-          <option value="soon">נגמר בקרוב</option>
-          <option value="expired">פג תוקף</option>
-        </select>
-      )}
     </div>
   );
 }
