@@ -6,7 +6,7 @@ import { Router } from "express";
 import { z } from "zod/v4";
 import { CATEGORIES } from "../constants";
 import { UPLOAD_DIR } from "../config";
-import { processUploadedFile, upload } from "../imageProcessing";
+import { generateThumbnail, generateThumbnailFromRegion, processUploadedFile, upload } from "../imageProcessing";
 
 const router = Router();
 
@@ -25,6 +25,20 @@ const ExtractionSchema = z.object({
     .nullable()
     .describe("'barcode' if a scannable barcode is visible, 'qr' if a QR code is visible, otherwise null"),
   notes: z.string().nullable().describe("Any other relevant details worth keeping, or null"),
+  photoRegion: z
+    .object({
+      x: z.number().describe("left edge of the region, as a fraction (0-1) of the full image width"),
+      y: z.number().describe("top edge of the region, as a fraction (0-1) of the full image height"),
+      width: z.number().describe("width of the region, as a fraction (0-1) of the full image width"),
+      height: z.number().describe("height of the region, as a fraction (0-1) of the full image height"),
+    })
+    .nullable()
+    .describe(
+      "Bounding box of the single distinct photo, product image, or logo graphic within this file, excluding " +
+        "surrounding text, whitespace, or document background (e.g. a coupon PDF with a product photo in one " +
+        "corner plus terms text elsewhere). Return null if the entire image is essentially just one photo with no " +
+        "separate text-heavy layout around it, or if no clear distinct photo/graphic can be identified.",
+    ),
 });
 
 const EXTRACTION_PROMPT = `You are looking at an image of a coupon, discount voucher, or gift card, possibly in Hebrew or English.
@@ -44,7 +58,7 @@ router.post("/", upload.single("image"), async (req, res) => {
   }
 
   try {
-    const { filename, mimeType, isPdfSourced, thumbnailFilename } = await processUploadedFile(req.file);
+    const { filename, mimeType, isPdfSourced } = await processUploadedFile(req.file);
     const imageBuffer = await fs.readFile(path.join(UPLOAD_DIR, filename));
 
     const client = new Anthropic();
@@ -71,11 +85,16 @@ router.post("/", upload.single("image"), async (req, res) => {
       return;
     }
 
+    const { photoRegion, ...extracted } = message.parsed_output;
+    const thumbnailFilename = photoRegion
+      ? await generateThumbnailFromRegion(filename, photoRegion)
+      : await generateThumbnail(filename);
+
     res.status(201).json({
       path: `/uploads/${filename}`,
       isPdfSourced,
       thumbnailPath: `/uploads/${thumbnailFilename}`,
-      extracted: message.parsed_output,
+      extracted,
     });
   } catch (err) {
     await fs.unlink(req.file.path).catch(() => {});

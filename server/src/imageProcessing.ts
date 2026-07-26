@@ -45,6 +45,17 @@ export async function convertPdfFirstPage(pdfPath: string): Promise<string> {
   return pngFilename;
 }
 
+/** Saves an uploaded file, converting PDF to PNG (first page) if needed. */
+export async function processUploadedFile(
+  file: Express.Multer.File,
+): Promise<{ filename: string; mimeType: string; isPdfSourced: boolean }> {
+  if (file.mimetype === "application/pdf") {
+    const pngFilename = await convertPdfFirstPage(file.path);
+    return { filename: pngFilename, mimeType: "image/png", isPdfSourced: true };
+  }
+  return { filename: file.filename, mimeType: file.mimetype, isPdfSourced: false };
+}
+
 /** Smart-crops the given image to a square-ish thumbnail, focusing on the most visually interesting region. */
 export async function generateThumbnail(sourceFilename: string): Promise<string> {
   const thumbFilename = `${uuidv4()}-thumb.jpg`;
@@ -55,15 +66,37 @@ export async function generateThumbnail(sourceFilename: string): Promise<string>
   return thumbFilename;
 }
 
-/** Saves an uploaded file (converting PDF to PNG if needed) and auto-generates a display thumbnail. */
-export async function processUploadedFile(
-  file: Express.Multer.File,
-): Promise<{ filename: string; mimeType: string; isPdfSourced: boolean; thumbnailFilename: string }> {
-  const { filename, mimeType, isPdfSourced } =
-    file.mimetype === "application/pdf"
-      ? { filename: await convertPdfFirstPage(file.path), mimeType: "image/png", isPdfSourced: true }
-      : { filename: file.filename, mimeType: file.mimetype, isPdfSourced: false };
+export interface FractionalRegion {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
-  const thumbnailFilename = await generateThumbnail(filename);
-  return { filename, mimeType, isPdfSourced, thumbnailFilename };
+/** Crops the given image to a specific region (fractions 0-1 of the source dimensions), then fits it to a square thumbnail. */
+export async function generateThumbnailFromRegion(
+  sourceFilename: string,
+  region: FractionalRegion,
+): Promise<string> {
+  const sourcePath = path.join(UPLOAD_DIR, sourceFilename);
+  const metadata = await sharp(sourcePath).metadata();
+  const imgWidth = metadata.width ?? 0;
+  const imgHeight = metadata.height ?? 0;
+
+  const left = Math.max(0, Math.min(imgWidth - 1, Math.round(region.x * imgWidth)));
+  const top = Math.max(0, Math.min(imgHeight - 1, Math.round(region.y * imgHeight)));
+  const width = Math.max(1, Math.min(imgWidth - left, Math.round(region.width * imgWidth)));
+  const height = Math.max(1, Math.min(imgHeight - top, Math.round(region.height * imgHeight)));
+
+  if (width < 20 || height < 20) {
+    return generateThumbnail(sourceFilename);
+  }
+
+  const thumbFilename = `${uuidv4()}-thumb.jpg`;
+  await sharp(sourcePath)
+    .extract({ left, top, width, height })
+    .resize(480, 480, { fit: "cover" })
+    .jpeg({ quality: 85 })
+    .toFile(path.join(UPLOAD_DIR, thumbFilename));
+  return thumbFilename;
 }

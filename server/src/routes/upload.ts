@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import { Router } from "express";
-import { processUploadedFile, upload } from "../imageProcessing";
+import { generateThumbnail, processUploadedFile, upload } from "../imageProcessing";
 
 const router = Router();
 
@@ -11,7 +11,8 @@ router.post("/", upload.single("image"), async (req, res) => {
   }
 
   try {
-    const { filename, isPdfSourced, thumbnailFilename } = await processUploadedFile(req.file);
+    const { filename, isPdfSourced } = await processUploadedFile(req.file);
+    const thumbnailFilename = await generateThumbnail(filename);
     res.status(201).json({
       path: `/uploads/${filename}`,
       isPdfSourced,
