@@ -34,8 +34,31 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [cropTarget, setCropTarget] = useState<ImageTarget | null>(null);
   const [uploading, setUploading] = useState<ImageTarget | null>(null);
+  const [loadingCropSource, setLoadingCropSource] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function handleEditThumbnail() {
+    const source = imagePath || thumbnailPath;
+    if (!source) return;
+    setLoadingCropSource(true);
+    setError(null);
+    try {
+      const res = await fetch(source, { credentials: "include" });
+      if (!res.ok) throw new Error("טעינת התמונה נכשלה");
+      const blob = await res.blob();
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCropTarget("thumbnail");
+        setCropSrc(reader.result as string);
+        setLoadingCropSource(false);
+      };
+      reader.readAsDataURL(blob);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "טעינת התמונה נכשלה");
+      setLoadingCropSource(false);
+    }
+  }
 
   async function handleFileSelect(e: ChangeEvent<HTMLInputElement>, target: ImageTarget) {
     const file = e.target.files?.[0];
@@ -208,13 +231,28 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
             <div className="field">
               <label>תמונה לתצוגה (לא חובה)</label>
               <p style={{ fontSize: "0.8rem", color: "var(--ink-soft)", margin: "0 0 6px" }}>
-                נגזרת אוטומטית מתמונת קובץ השובר. אפשר להעלות או לגזור תמונה משלכם במקומה.
+                נגזרת אוטומטית מתמונת קובץ השובר. לחצו על התמונה כדי לכוונן את הגזירה, או העלו תמונה משלכם.
               </p>
               {thumbnailPath ? (
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <img src={thumbnailPath} alt="תמונת תצוגה" style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8 }} />
+                  <button
+                    type="button"
+                    onClick={handleEditThumbnail}
+                    disabled={loadingCropSource}
+                    style={{ padding: 0, border: "none", background: "none", cursor: "pointer" }}
+                    title="לחצו כדי לכוונן את הגזירה"
+                  >
+                    <img
+                      src={thumbnailPath}
+                      alt="תמונת תצוגה"
+                      style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8 }}
+                    />
+                  </button>
+                  <button type="button" className="btn btn-ghost" onClick={handleEditThumbnail} disabled={loadingCropSource}>
+                    {loadingCropSource ? "טוען..." : "כיוון גזירה"}
+                  </button>
                   <button type="button" className="btn btn-ghost" onClick={() => setThumbnailPath("")}>
-                    החלפה
+                    הסרה
                   </button>
                 </div>
               ) : (
