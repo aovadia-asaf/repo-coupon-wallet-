@@ -19,13 +19,15 @@ const couponInputSchema = z.object({
   thumbnailPath: z.string().optional().nullable(),
 });
 
+const SOON_THRESHOLD_DAYS = 30;
+
 function expiryStatus(expiry: Date | null): "valid" | "soon" | "expired" {
   if (!expiry) return "valid";
   const now = new Date();
   const msPerDay = 24 * 60 * 60 * 1000;
   const daysLeft = Math.ceil((expiry.getTime() - now.getTime()) / msPerDay);
   if (daysLeft < 0) return "expired";
-  if (daysLeft <= 7) return "soon";
+  if (daysLeft <= SOON_THRESHOLD_DAYS) return "soon";
   return "valid";
 }
 

@@ -29,7 +29,7 @@ export function CouponListView({ coupons, onSelect }: Props) {
               opacity: coupon.redeemed ? 0.6 : 1,
             }}
           >
-            <span style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: "1 1 auto" }}>
               {thumb ? (
                 <img
                   src={thumb}
@@ -54,9 +54,19 @@ export function CouponListView({ coupons, onSelect }: Props) {
                   🎟️
                 </span>
               )}
-              <span style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis" }}>{coupon.title}</span>
+              <span
+                style={{
+                  fontWeight: 600,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  minWidth: 0,
+                }}
+              >
+                {coupon.title}
+              </span>
             </span>
-            <span style={{ display: "flex", gap: 8, alignItems: "center", fontSize: "0.8rem", color: "var(--ink-soft)", flexShrink: 0 }}>
+            <span style={{ display: "flex", gap: 8, alignItems: "center", fontSize: "0.8rem", color: "var(--ink-soft)", flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
               {coupon.store && <span>{coupon.store}</span>}
               <span>{CATEGORY_LABELS[coupon.category]}</span>
               {!coupon.redeemed && (

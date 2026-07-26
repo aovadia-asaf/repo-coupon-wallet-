@@ -87,9 +87,9 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <header style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 24 }}>
         <h1 style={{ fontSize: "1.6rem" }}>🎟️ ארנק הקופונים המשפחתי</h1>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
           <a href="/api/coupons/export?format=csv" className="btn btn-secondary" style={{ textDecoration: "none" }}>
             ייצוא CSV
           </a>
@@ -105,7 +105,7 @@ export default function App() {
         </div>
       </header>
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
         <ViewTabs view={view} onChange={setView} />
         <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
           <button
