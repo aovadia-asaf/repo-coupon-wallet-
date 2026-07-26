@@ -19,8 +19,8 @@ export function ImportModal({ onCancel, onExtracted }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const { path, isPdfSourced, extracted } = await api.extractCoupon(file);
-      onExtracted({ ...extracted, imagePath: path, imageIsPdfSourced: isPdfSourced });
+      const { path, isPdfSourced, thumbnailPath, extracted } = await api.extractCoupon(file);
+      onExtracted({ ...extracted, imagePath: path, imageIsPdfSourced: isPdfSourced, thumbnailPath });
     } catch (err) {
       setError(err instanceof Error ? err.message : "הזיהוי האוטומטי נכשל");
     } finally {

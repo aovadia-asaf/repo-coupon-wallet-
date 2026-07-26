@@ -46,9 +46,10 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
       setUploading(target);
       setError(null);
       try {
-        const { path, isPdfSourced } = await api.uploadImage(file, file.name);
+        const { path, isPdfSourced, thumbnailPath: autoThumb } = await api.uploadImage(file, file.name);
         setImagePath(path);
         setImageIsPdfSourced(isPdfSourced);
+        if (autoThumb) setThumbnailPath(autoThumb);
       } catch (err) {
         setError(err instanceof Error ? err.message : "העלאה נכשלה");
       } finally {
@@ -68,12 +69,13 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
     setUploading(target);
     setError(null);
     try {
-      const { path, isPdfSourced } = await api.uploadImage(blob, "coupon.jpg");
+      const { path, isPdfSourced, thumbnailPath: autoThumb } = await api.uploadImage(blob, "coupon.jpg");
       if (target === "thumbnail") {
         setThumbnailPath(path);
       } else {
         setImagePath(path);
         setImageIsPdfSourced(isPdfSourced);
+        if (autoThumb) setThumbnailPath(autoThumb);
       }
       setCropSrc(null);
       setCropTarget(null);
@@ -206,13 +208,13 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
             <div className="field">
               <label>תמונה לתצוגה (לא חובה)</label>
               <p style={{ fontSize: "0.8rem", color: "var(--ink-soft)", margin: "0 0 6px" }}>
-                תמונה קטנה שתוצג בכרטיס וברשימה — אם לא תעלו, תוצג תמונת קובץ השובר.
+                נגזרת אוטומטית מתמונת קובץ השובר. אפשר להעלות או לגזור תמונה משלכם במקומה.
               </p>
               {thumbnailPath ? (
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                   <img src={thumbnailPath} alt="תמונת תצוגה" style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8 }} />
                   <button type="button" className="btn btn-ghost" onClick={() => setThumbnailPath("")}>
-                    הסרה
+                    החלפה
                   </button>
                 </div>
               ) : (

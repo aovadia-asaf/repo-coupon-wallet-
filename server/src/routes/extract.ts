@@ -44,7 +44,7 @@ router.post("/", upload.single("image"), async (req, res) => {
   }
 
   try {
-    const { filename, mimeType, isPdfSourced } = await processUploadedFile(req.file);
+    const { filename, mimeType, isPdfSourced, thumbnailFilename } = await processUploadedFile(req.file);
     const imageBuffer = await fs.readFile(path.join(UPLOAD_DIR, filename));
 
     const client = new Anthropic();
@@ -74,6 +74,7 @@ router.post("/", upload.single("image"), async (req, res) => {
     res.status(201).json({
       path: `/uploads/${filename}`,
       isPdfSourced,
+      thumbnailPath: `/uploads/${thumbnailFilename}`,
       extracted: message.parsed_output,
     });
   } catch (err) {

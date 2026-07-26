@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import multer from "multer";
+import sharp from "sharp";
 import { v4 as uuidv4 } from "uuid";
 import { UPLOAD_DIR } from "./config";
 
@@ -44,13 +45,25 @@ export async function convertPdfFirstPage(pdfPath: string): Promise<string> {
   return pngFilename;
 }
 
-/** Saves an uploaded file (converting PDF to PNG if needed) and returns the final filename + mimetype. */
+/** Smart-crops the given image to a square-ish thumbnail, focusing on the most visually interesting region. */
+export async function generateThumbnail(sourceFilename: string): Promise<string> {
+  const thumbFilename = `${uuidv4()}-thumb.jpg`;
+  await sharp(path.join(UPLOAD_DIR, sourceFilename))
+    .resize(480, 480, { fit: "cover", position: sharp.strategy.attention })
+    .jpeg({ quality: 85 })
+    .toFile(path.join(UPLOAD_DIR, thumbFilename));
+  return thumbFilename;
+}
+
+/** Saves an uploaded file (converting PDF to PNG if needed) and auto-generates a display thumbnail. */
 export async function processUploadedFile(
   file: Express.Multer.File,
-): Promise<{ filename: string; mimeType: string; isPdfSourced: boolean }> {
-  if (file.mimetype === "application/pdf") {
-    const pngFilename = await convertPdfFirstPage(file.path);
-    return { filename: pngFilename, mimeType: "image/png", isPdfSourced: true };
-  }
-  return { filename: file.filename, mimeType: file.mimetype, isPdfSourced: false };
+): Promise<{ filename: string; mimeType: string; isPdfSourced: boolean; thumbnailFilename: string }> {
+  const { filename, mimeType, isPdfSourced } =
+    file.mimetype === "application/pdf"
+      ? { filename: await convertPdfFirstPage(file.path), mimeType: "image/png", isPdfSourced: true }
+      : { filename: file.filename, mimeType: file.mimetype, isPdfSourced: false };
+
+  const thumbnailFilename = await generateThumbnail(filename);
+  return { filename, mimeType, isPdfSourced, thumbnailFilename };
 }
