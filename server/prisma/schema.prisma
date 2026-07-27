@@ -13,6 +13,7 @@ model Coupon {
   store             String?
   category          String    @default("other")
   value             String?
+  location          String?
   expiry            DateTime?
   code              String?
   codeType          String?

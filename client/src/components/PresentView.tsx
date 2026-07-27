@@ -2,6 +2,7 @@ import JsBarcode from "jsbarcode";
 import QRCode from "qrcode";
 import { useEffect, useRef } from "react";
 import { CATEGORY_LABELS, type Coupon } from "../types";
+import { wazeUrl } from "../utils/waze";
 
 interface Props {
   coupon: Coupon;
@@ -65,6 +66,15 @@ export function PresentView({ coupon, onClose }: Props) {
         {coupon.expiry && (
           <p style={{ marginTop: 16, fontSize: "0.9rem" }}>
             בתוקף עד {new Date(coupon.expiry).toLocaleDateString("he-IL")}
+          </p>
+        )}
+
+        {coupon.location && (
+          <p style={{ marginTop: 8, fontSize: "0.9rem", display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+            <span style={{ color: "var(--ink-soft)" }}>📍 {coupon.location}</span>
+            <a href={wazeUrl(coupon.location)} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)" }}>
+              נווט ב-Waze
+            </a>
           </p>
         )}
 

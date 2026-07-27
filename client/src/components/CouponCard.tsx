@@ -1,4 +1,5 @@
 import { CATEGORY_LABELS, type Coupon, STATUS_LABELS } from "../types";
+import { wazeUrl } from "../utils/waze";
 
 interface Props {
   coupon: Coupon;
@@ -35,6 +36,20 @@ export function CouponCard({ coupon, onEdit, onDelete, onToggleRedeemed, onPrese
       </p>
       {coupon.expiry && (
         <p style={{ margin: 0, fontSize: "0.85rem" }}>בתוקף עד {formatDate(coupon.expiry)}</p>
+      )}
+      {coupon.location && (
+        <p style={{ margin: 0, fontSize: "0.85rem", display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+          <span style={{ color: "var(--ink-soft)" }}>📍 {coupon.location}</span>
+          <a
+            href={wazeUrl(coupon.location)}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            style={{ color: "var(--accent)" }}
+          >
+            נווט ב-Waze
+          </a>
+        </p>
       )}
       {coupon.code && (
         <div className="ticket-tear">

@@ -15,6 +15,13 @@ const ExtractionSchema = z.object({
   store: z.string().nullable().describe("Business or brand name shown on the coupon, or null if not visible"),
   category: z.enum(CATEGORIES).describe("Best matching category for this coupon"),
   value: z.string().nullable().describe("The discount/value as shown, e.g. '20%' or '50 ILS', or null"),
+  location: z
+    .string()
+    .nullable()
+    .describe(
+      "The physical venue/address where this coupon or ticket is redeemed or the event takes place, if shown " +
+        "(e.g. a hall name, address, or city). Null if no location is printed on it.",
+    ),
   expiry: z
     .string()
     .nullable()
@@ -24,7 +31,13 @@ const ExtractionSchema = z.object({
     .enum(["barcode", "qr"])
     .nullable()
     .describe("'barcode' if a scannable barcode is visible, 'qr' if a QR code is visible, otherwise null"),
-  notes: z.string().nullable().describe("Any other relevant details worth keeping, or null"),
+  notes: z
+    .string()
+    .nullable()
+    .describe(
+      "Any other relevant details worth keeping (date/time, seat, order number, etc.), or null. Do not repeat " +
+        "the location/address here — that goes in the location field.",
+    ),
   photoRegion: z
     .object({
       x: z.number().describe("left edge of the region, as a fraction (0-1) of the full image width"),

@@ -23,6 +23,7 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
   const [store, setStore] = useState(source?.store ?? "");
   const [category, setCategory] = useState<Category>(source?.category ?? "other");
   const [value, setValue] = useState(source?.value ?? "");
+  const [location, setLocation] = useState(source?.location ?? "");
   const [expiry, setExpiry] = useState(toDateInputValue(source?.expiry ?? null));
   const [code, setCode] = useState(source?.code ?? "");
   const [codeType, setCodeType] = useState<CodeType | "">(source?.codeType ?? "");
@@ -132,6 +133,7 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
       store: store.trim() || null,
       category,
       value: value.trim() || null,
+      location: location.trim() || null,
       expiry: expiry ? new Date(expiry).toISOString() : null,
       code: code.trim() || null,
       codeType: codeType || null,
@@ -191,6 +193,15 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
             <div className="field">
               <label htmlFor="value">שווי</label>
               <input id="value" value={value} onChange={(e) => setValue(e.target.value)} placeholder="לדוגמה: 50 ש״ח / 20%" />
+            </div>
+            <div className="field">
+              <label htmlFor="location">מיקום</label>
+              <input
+                id="location"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="לדוגמה: היכל התרבות ראשל״צ"
+              />
             </div>
             <div className="field">
               <label htmlFor="expiry">תוקף עד</label>

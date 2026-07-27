@@ -17,6 +17,7 @@ export interface Coupon {
   store: string | null;
   category: Category;
   value: string | null;
+  location: string | null;
   expiry: string | null;
   code: string | null;
   codeType: CodeType | null;
@@ -36,6 +37,7 @@ export interface ExtractedFields {
   store: string | null;
   category: Category;
   value: string | null;
+  location: string | null;
   expiry: string | null;
   code: string | null;
   codeType: CodeType | null;
@@ -47,6 +49,7 @@ export interface CouponInput {
   store?: string | null;
   category: Category;
   value?: string | null;
+  location?: string | null;
   expiry?: string | null;
   code?: string | null;
   codeType?: CodeType | null;
