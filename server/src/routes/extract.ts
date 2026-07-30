@@ -121,6 +121,12 @@ router.post("/", upload.single("image"), async (req, res) => {
       extracted.codeType = "qr";
       const qrFilename = await extractQrImage(filename, detectedQr.region);
       qrImagePath = `/uploads/${qrFilename}`;
+    } else if (extracted.codeType === "qr") {
+      // The AI saw what looked like a QR but we couldn't actually decode one — the printed number
+      // it read is not verified to be the QR's real payload, so it's not safe to present as a
+      // scannable code. Leave it out rather than risk showing a wrong QR.
+      extracted.code = null;
+      extracted.codeType = null;
     }
 
     res.status(201).json({

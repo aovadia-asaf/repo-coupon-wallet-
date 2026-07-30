@@ -68,6 +68,13 @@ export interface QrDetectionResult {
   region: { left: number; top: number; width: number; height: number };
 }
 
+// jsQR's detection reliability depends heavily on the QR's pixel size *relative to the whole
+// image*, not just absolute resolution: a QR filling most of the frame needs to stay near full
+// resolution to stay legible, while a small QR embedded in a large screenshot only gets detected
+// once the whole image is downscaled enough to bring it into jsQR's effective sweet spot. There's
+// no single resize target that works for both, so several scales are tried, largest first.
+const QR_DETECTION_MAX_DIMENSIONS = [3000, 1600, 1200, 800, 500, 350];
+
 /**
  * Locates and decodes a QR code in the image, if any, returning both its payload and its pixel
  * bounding box (mapped back to the original image's coordinates). The printed reference number next
@@ -79,34 +86,38 @@ export async function detectQrInImage(sourceFilename: string): Promise<QrDetecti
   const originalMeta = await sharp(sourcePath).metadata();
   const originalWidth = originalMeta.width ?? 0;
 
-  const { data, info } = await sharp(sourcePath)
-    .resize(3000, 3000, { fit: "inside", withoutEnlargement: true })
-    .ensureAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  const pixels = new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength);
-  const result = jsQR(pixels, info.width, info.height);
-  if (!result) return null;
+  for (const maxDim of QR_DETECTION_MAX_DIMENSIONS) {
+    const { data, info } = await sharp(sourcePath)
+      .resize(maxDim, maxDim, { fit: "inside", withoutEnlargement: true })
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const pixels = new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength);
+    const result = jsQR(pixels, info.width, info.height);
+    if (!result) continue;
 
-  const scaleBack = originalWidth / info.width;
-  const corners = [
-    result.location.topLeftCorner,
-    result.location.topRightCorner,
-    result.location.bottomLeftCorner,
-    result.location.bottomRightCorner,
-  ];
-  const xs = corners.map((c) => c.x * scaleBack);
-  const ys = corners.map((c) => c.y * scaleBack);
+    const scaleBack = originalWidth / info.width;
+    const corners = [
+      result.location.topLeftCorner,
+      result.location.topRightCorner,
+      result.location.bottomLeftCorner,
+      result.location.bottomRightCorner,
+    ];
+    const xs = corners.map((c) => c.x * scaleBack);
+    const ys = corners.map((c) => c.y * scaleBack);
 
-  return {
-    data: result.data,
-    region: {
-      left: Math.min(...xs),
-      top: Math.min(...ys),
-      width: Math.max(...xs) - Math.min(...xs),
-      height: Math.max(...ys) - Math.min(...ys),
-    },
-  };
+    return {
+      data: result.data,
+      region: {
+        left: Math.min(...xs),
+        top: Math.min(...ys),
+        width: Math.max(...xs) - Math.min(...xs),
+        height: Math.max(...ys) - Math.min(...ys),
+      },
+    };
+  }
+
+  return null;
 }
 
 /**
