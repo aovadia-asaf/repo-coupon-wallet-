@@ -21,6 +21,8 @@ export interface Coupon {
   expiry: string | null;
   code: string | null;
   codeType: CodeType | null;
+  qrImagePath: string | null;
+  websiteUrl: string | null;
   notes: string | null;
   imagePath: string | null;
   imageIsPdfSourced: boolean;
@@ -53,6 +55,8 @@ export interface CouponInput {
   expiry?: string | null;
   code?: string | null;
   codeType?: CodeType | null;
+  qrImagePath?: string | null;
+  websiteUrl?: string | null;
   notes?: string | null;
   imagePath?: string | null;
   imageIsPdfSourced?: boolean;

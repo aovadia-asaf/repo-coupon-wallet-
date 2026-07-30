@@ -6,7 +6,14 @@ import { Router } from "express";
 import { z } from "zod/v4";
 import { CATEGORIES } from "../constants";
 import { UPLOAD_DIR } from "../config";
-import { decodeQrFromImage, generateThumbnail, generateThumbnailFromRegion, processUploadedFile, upload } from "../imageProcessing";
+import {
+  detectQrInImage,
+  extractQrImage,
+  generateThumbnail,
+  generateThumbnailFromRegion,
+  processUploadedFile,
+  upload,
+} from "../imageProcessing";
 
 const router = Router();
 
@@ -103,18 +110,24 @@ router.post("/", upload.single("image"), async (req, res) => {
       ? await generateThumbnailFromRegion(filename, photoRegion)
       : await generateThumbnail(filename);
 
-    // A decoded QR payload is ground truth for what the scanner reads — it can differ from the
-    // printed reference number the AI read off the ticket, so it takes priority when present.
-    const decodedQr = await decodeQrFromImage(filename).catch(() => null);
-    if (decodedQr) {
-      extracted.code = decodedQr;
+    // The real QR graphic (and its exact decoded payload) is ground truth for what the scanner
+    // reads — it can differ from the printed reference number the AI read off the ticket, so it
+    // takes priority when present. We show the actual cropped QR image rather than regenerating
+    // one, so there's no risk of a mismatch.
+    const detectedQr = await detectQrInImage(filename).catch(() => null);
+    let qrImagePath: string | undefined;
+    if (detectedQr) {
+      extracted.code = detectedQr.data;
       extracted.codeType = "qr";
+      const qrFilename = await extractQrImage(filename, detectedQr.region);
+      qrImagePath = `/uploads/${qrFilename}`;
     }
 
     res.status(201).json({
       path: `/uploads/${filename}`,
       isPdfSourced,
       thumbnailPath: `/uploads/${thumbnailFilename}`,
+      ...(qrImagePath && { qrImagePath }),
       extracted,
     });
   } catch (err) {

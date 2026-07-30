@@ -62,13 +62,23 @@ export async function processUploadedFile(
   return { filename: file.filename, mimeType: file.mimetype, isPdfSourced: false };
 }
 
+export interface QrDetectionResult {
+  data: string;
+  /** Bounding box of the QR in the *original* source image's pixel coordinates. */
+  region: { left: number; top: number; width: number; height: number };
+}
+
 /**
- * Reads the actual payload of a QR code found in the image, if any. The printed reference number next
+ * Locates and decodes a QR code in the image, if any, returning both its payload and its pixel
+ * bounding box (mapped back to the original image's coordinates). The printed reference number next
  * to a QR on a ticket (which is what AI/OCR reads) is often just a human-entry fallback, not the same
- * string the scanner reads from the QR itself — so this decodes the real code directly from the pixels.
+ * string the scanner reads from the QR itself — so this reads the real code directly from the pixels.
  */
-export async function decodeQrFromImage(sourceFilename: string): Promise<string | null> {
+export async function detectQrInImage(sourceFilename: string): Promise<QrDetectionResult | null> {
   const sourcePath = path.join(UPLOAD_DIR, sourceFilename);
+  const originalMeta = await sharp(sourcePath).metadata();
+  const originalWidth = originalMeta.width ?? 0;
+
   const { data, info } = await sharp(sourcePath)
     .resize(3000, 3000, { fit: "inside", withoutEnlargement: true })
     .ensureAlpha()
@@ -76,7 +86,55 @@ export async function decodeQrFromImage(sourceFilename: string): Promise<string 
     .toBuffer({ resolveWithObject: true });
   const pixels = new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength);
   const result = jsQR(pixels, info.width, info.height);
-  return result?.data ?? null;
+  if (!result) return null;
+
+  const scaleBack = originalWidth / info.width;
+  const corners = [
+    result.location.topLeftCorner,
+    result.location.topRightCorner,
+    result.location.bottomLeftCorner,
+    result.location.bottomRightCorner,
+  ];
+  const xs = corners.map((c) => c.x * scaleBack);
+  const ys = corners.map((c) => c.y * scaleBack);
+
+  return {
+    data: result.data,
+    region: {
+      left: Math.min(...xs),
+      top: Math.min(...ys),
+      width: Math.max(...xs) - Math.min(...xs),
+      height: Math.max(...ys) - Math.min(...ys),
+    },
+  };
+}
+
+/**
+ * Crops the exact QR graphic out of the source image (with a small quiet-zone margin so it still
+ * scans reliably) instead of regenerating one from the decoded text — guaranteeing pixel-for-pixel
+ * fidelity with the original code.
+ */
+export async function extractQrImage(
+  sourceFilename: string,
+  region: { left: number; top: number; width: number; height: number },
+): Promise<string> {
+  const sourcePath = path.join(UPLOAD_DIR, sourceFilename);
+  const metadata = await sharp(sourcePath).metadata();
+  const imgWidth = metadata.width ?? 0;
+  const imgHeight = metadata.height ?? 0;
+
+  const padX = region.width * 0.25;
+  const padY = region.height * 0.25;
+  const left = Math.max(0, Math.round(region.left - padX));
+  const top = Math.max(0, Math.round(region.top - padY));
+  const width = Math.min(imgWidth - left, Math.round(region.width + padX * 2));
+  const height = Math.min(imgHeight - top, Math.round(region.height + padY * 2));
+
+  const qrFilename = `${uuidv4()}-qr.png`;
+  await sharp(sourcePath)
+    .extract({ left, top, width, height })
+    .toFile(path.join(UPLOAD_DIR, qrFilename));
+  return qrFilename;
 }
 
 /** Smart-crops the given image to a square-ish thumbnail, focusing on the most visually interesting region. */

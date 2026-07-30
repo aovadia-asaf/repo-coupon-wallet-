@@ -61,7 +61,14 @@ export const api = {
   uploadImage: async (
     file: Blob,
     filename: string,
-  ): Promise<{ path: string; isPdfSourced: boolean; thumbnailPath: string; code?: string; codeType?: CodeType }> => {
+  ): Promise<{
+    path: string;
+    isPdfSourced: boolean;
+    thumbnailPath: string;
+    code?: string;
+    codeType?: CodeType;
+    qrImagePath?: string;
+  }> => {
     const form = new FormData();
     form.append("image", file, filename);
     const res = await fetch("/api/upload", { method: "POST", credentials: "include", body: form });
@@ -80,7 +87,13 @@ export const api = {
 
   extractCoupon: async (
     file: File,
-  ): Promise<{ path: string; isPdfSourced: boolean; thumbnailPath: string; extracted: ExtractedFields }> => {
+  ): Promise<{
+    path: string;
+    isPdfSourced: boolean;
+    thumbnailPath: string;
+    qrImagePath?: string;
+    extracted: ExtractedFields;
+  }> => {
     const form = new FormData();
     form.append("image", file, file.name);
     const res = await fetch("/api/import/extract", { method: "POST", credentials: "include", body: form });

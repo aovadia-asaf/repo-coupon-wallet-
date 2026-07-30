@@ -58,6 +58,19 @@ export function CouponCard({ coupon, onEdit, onDelete, onToggleRedeemed, onPrese
           </p>
         </div>
       )}
+      {coupon.websiteUrl && (
+        <p style={{ margin: 0, fontSize: "0.85rem" }}>
+          <a
+            href={coupon.websiteUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            style={{ color: "var(--accent)" }}
+          >
+            🔗 לאתר הכרטיסים
+          </a>
+        </p>
+      )}
       {coupon.notes && <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--ink-soft)" }}>{coupon.notes}</p>}
       {coupon.redeemed && (
         <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--ink-soft)" }}>

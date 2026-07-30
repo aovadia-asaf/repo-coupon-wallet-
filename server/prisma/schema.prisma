@@ -17,6 +17,8 @@ model Coupon {
   expiry            DateTime?
   code              String?
   codeType          String?
+  qrImagePath       String?
+  websiteUrl        String?
   notes             String?
   imagePath         String?
   imageIsPdfSourced Boolean   @default(false)

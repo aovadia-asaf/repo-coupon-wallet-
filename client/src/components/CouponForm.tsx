@@ -27,6 +27,8 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
   const [expiry, setExpiry] = useState(toDateInputValue(source?.expiry ?? null));
   const [code, setCode] = useState(source?.code ?? "");
   const [codeType, setCodeType] = useState<CodeType | "">(source?.codeType ?? "");
+  const [qrImagePath, setQrImagePath] = useState(source?.qrImagePath ?? "");
+  const [websiteUrl, setWebsiteUrl] = useState(source?.websiteUrl ?? "");
   const [notes, setNotes] = useState(source?.notes ?? "");
   const [imagePath, setImagePath] = useState(source?.imagePath ?? "");
   const [imageIsPdfSourced, setImageIsPdfSourced] = useState(source?.imageIsPdfSourced ?? false);
@@ -70,14 +72,21 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
       setUploading(target);
       setError(null);
       try {
-        const { path, isPdfSourced, thumbnailPath: autoThumb, code: decodedCode, codeType: decodedCodeType } =
-          await api.uploadImage(file, file.name);
+        const {
+          path,
+          isPdfSourced,
+          thumbnailPath: autoThumb,
+          code: decodedCode,
+          codeType: decodedCodeType,
+          qrImagePath: decodedQrImage,
+        } = await api.uploadImage(file, file.name);
         setImagePath(path);
         setImageIsPdfSourced(isPdfSourced);
         if (autoThumb) setThumbnailPath(autoThumb);
         if (decodedCode && !code) {
           setCode(decodedCode);
           setCodeType(decodedCodeType ?? "qr");
+          if (decodedQrImage) setQrImagePath(decodedQrImage);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "העלאה נכשלה");
@@ -98,8 +107,14 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
     setUploading(target);
     setError(null);
     try {
-      const { path, isPdfSourced, thumbnailPath: autoThumb, code: decodedCode, codeType: decodedCodeType } =
-        await api.uploadImage(blob, "coupon.jpg");
+      const {
+        path,
+        isPdfSourced,
+        thumbnailPath: autoThumb,
+        code: decodedCode,
+        codeType: decodedCodeType,
+        qrImagePath: decodedQrImage,
+      } = await api.uploadImage(blob, "coupon.jpg");
       if (target === "thumbnail") {
         setThumbnailPath(path);
       } else {
@@ -109,6 +124,7 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
         if (decodedCode && !code) {
           setCode(decodedCode);
           setCodeType(decodedCodeType ?? "qr");
+          if (decodedQrImage) setQrImagePath(decodedQrImage);
         }
       }
       setCropSrc(null);
@@ -137,6 +153,8 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
       expiry: expiry ? new Date(expiry).toISOString() : null,
       code: code.trim() || null,
       codeType: codeType || null,
+      qrImagePath: qrImagePath || null,
+      websiteUrl: websiteUrl.trim() || null,
       notes: notes.trim() || null,
       imagePath: imagePath || null,
       imageIsPdfSourced,
@@ -209,7 +227,20 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
             </div>
             <div className="field">
               <label htmlFor="code">קוד שובר</label>
-              <input id="code" className="mono" value={code} onChange={(e) => setCode(e.target.value)} />
+              <input
+                id="code"
+                className="mono"
+                value={code}
+                onChange={(e) => {
+                  setCode(e.target.value);
+                  if (qrImagePath) setQrImagePath("");
+                }}
+              />
+              {qrImagePath && (
+                <p style={{ fontSize: "0.8rem", color: "var(--ink-soft)", margin: "6px 0 0" }}>
+                  ✓ זוהה קוד QR אמיתי מהתמונה — הוא זה שיוצג בהצגת השובר
+                </p>
+              )}
             </div>
             <div className="field">
               <label htmlFor="codeType">סוג קוד</label>
@@ -218,6 +249,16 @@ export function CouponForm({ initial, prefill, onSaved, onCancel }: Props) {
                 <option value="barcode">ברקוד</option>
                 <option value="qr">QR</option>
               </select>
+            </div>
+            <div className="field">
+              <label htmlFor="websiteUrl">קישור לאתר הכרטיסים</label>
+              <input
+                id="websiteUrl"
+                type="url"
+                value={websiteUrl}
+                onChange={(e) => setWebsiteUrl(e.target.value)}
+                placeholder="https://..."
+              />
             </div>
             <div className="field">
               <label htmlFor="notes">הערות</label>
