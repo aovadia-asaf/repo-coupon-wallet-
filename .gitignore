@@ -9,3 +9,4 @@ server/prisma/dev.db-journal
 *.log
 .DS_Store
 *.tsbuildinfo
+android-signing/
